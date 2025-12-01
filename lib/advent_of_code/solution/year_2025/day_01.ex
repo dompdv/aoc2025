@@ -1,8 +1,4 @@
 defmodule AdventOfCode.Solution.Year2025.Day01 do
-  def remp(n, p) when rem(n, p) == 0, do: 0
-  def remp(n, p) when n > 0, do: rem(n, p)
-  def remp(n, p), do: rem(n, p) + p
-
   def dial(input, start, mult, counter_func) do
     input
     |> String.split("\n", trim: true)
@@ -19,6 +15,7 @@ defmodule AdventOfCode.Solution.Year2025.Day01 do
     |> elem(1)
   end
 
+  defp remp(n, p), do: Integer.mod(n, p)
   def next_position(current, delta, mult), do: remp(current + delta, mult)
 
   # Brute force, but simple
