@@ -42,9 +42,9 @@ defmodule AdventOfCode.Input do
     :ok = File.write(path, input)
   end
 
-  defp from_cache!(day, year), do: File.read!(cache_path(day, year))
+  def from_cache!(day, year), do: File.read!(cache_path(day, year))
 
-  defp download!(day, year) do
+  def download!(day, year) do
     HTTPoison.start()
 
     {:ok, %{status_code: 200, body: input}} =
