@@ -2,76 +2,45 @@ defmodule AdventOfCode.Solution.Year2025.Day02 do
   def parse(input) do
     input
     |> String.trim()
-    |> String.split(",")
+    |> String.split(",", trim: true)
     |> Enum.map(fn r ->
       [l, h] = String.split(r, "-")
       {String.to_integer(l), String.to_integer(h)}
     end)
   end
 
-  def is_invalid_old(n) do
-    sn = to_string(n) |> to_charlist()
-    l = div(length(sn), 2)
+  def is_invalid(n, _stop_at) when n < 10, do: false
 
-    tests =
-      for i <- 1..l do
-        groups = Enum.chunk_every(sn, i, 1)
-        sets = MapSet.new(groups)
-        length(groups) != MapSet.size(sets)
-      end
+  def is_invalid(n, stop_at) do
+    n_into_chars = n |> to_string() |> to_charlist()
+    number_length = length(n_into_chars)
+    test_until = if stop_at == nil, do: number_length, else: stop_at
 
-    IO.inspect({n, tests})
-
-    if Enum.any?(tests), do: n, else: 0
-  end
-
-  def is_invalid(n) do
-    sn = to_string(n) |> to_charlist()
-
-    l = length(sn)
-
-    if rem(l, 2) == 1 do
-      0
-    else
-      [a, b] = Enum.chunk_every(sn, div(l, 2))
-      if a == b, do: n, else: 0
-    end
-  end
-
-  def is_invalid2(n) when n < 10 do
-    0
-  end
-
-  def is_invalid2(n) do
-    sn = to_string(n) |> to_charlist()
-    l = length(sn)
-
+    # Cut into all sizes of pieces
     all_divs =
-      for i <- 2..l do
-        if rem(l, i) != 0 do
+      for i <- 2..test_until do
+        if rem(number_length, i) != 0 do
+          # If the number can be cut in equal sizes
           false
         else
-          chunks = Enum.chunk_every(sn, div(l, i)) |> Enum.uniq()
-          length(chunks) == 1
+          # Test if all chunks are equal
+          Enum.chunk_every(n_into_chars, div(number_length, i))
+          |> Enum.uniq()
+          |> then(&(length(&1) == 1))
         end
       end
 
-    if Enum.any?(all_divs), do: n, else: 0
+    Enum.any?(all_divs)
   end
 
-  def invalid_id({l, h}) do
-    for(i <- l..h, do: is_invalid(i)) |> Enum.sum()
+  def scan(input, stop_at) do
+    Enum.sum(
+      for {l, h} <- parse(input), n <- l..h, is_invalid(n, stop_at) do
+        n
+      end
+    )
   end
 
-  def invalid_id2({l, h}) do
-    for(i <- l..h, do: is_invalid2(i)) |> Enum.sum()
-  end
-
-  def part1(input) do
-    input |> parse() |> Enum.map(&invalid_id/1) |> Enum.sum()
-  end
-
-  def part2(input) do
-    input |> parse() |> Enum.map(&invalid_id2/1) |> Enum.sum()
-  end
+  def part1(input), do: scan(input, 2)
+  def part2(input), do: scan(input, nil)
 end
