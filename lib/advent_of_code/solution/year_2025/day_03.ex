@@ -7,15 +7,6 @@ defmodule AdventOfCode.Solution.Year2025.Day03 do
     end)
   end
 
-  ### Part 1
-  def largest_two(bank) do
-    bank_wi = Enum.with_index(bank)
-    Enum.max(for {n1, i1} <- bank_wi, {n2, i2} <- bank_wi, i1 < i2, do: n1 * 10 + n2)
-  end
-
-  def part1(input), do: parse(input) |> Enum.map(&largest_two/1) |> Enum.sum()
-
-  ### Part 2
   # End of recursion: all switches are activated
   def search(_, cumul, -1), do: cumul
 
@@ -28,5 +19,6 @@ defmodule AdventOfCode.Solution.Year2025.Day03 do
     search(r, cumul + max_in_remaining * Integer.pow(10, n_switches), n_switches - 1)
   end
 
+  def part1(input), do: parse(input) |> Enum.map(&search(&1, 0, 1)) |> Enum.sum()
   def part2(input), do: parse(input) |> Enum.map(&search(&1, 0, 11)) |> Enum.sum()
 end
