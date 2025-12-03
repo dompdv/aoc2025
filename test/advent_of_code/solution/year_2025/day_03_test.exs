@@ -7,13 +7,12 @@ defmodule AdventOfCode.Solution.Year2025.Day03Test do
     [
       input: """
       234234234234278
+      818181911112111
+      987654321111111
+      811111111111119
       """
     ]
   end
-
-  # 987654321111111
-  # 811111111111119
-  # 818181911112111
 
   @tag :skip
   test "part1", %{input: input} do
