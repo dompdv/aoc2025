@@ -6,15 +6,24 @@ defmodule AdventOfCode.Solution.Year2025.Day04Test do
   setup do
     [
       input: """
+      ..@@.@@@@.
+      @@@.@.@.@@
+      @@@@@.@.@@
+      @.@@@@..@.
+      @@.@@@@.@@
+      .@@@@@@@.@
+      .@.@.@.@@@
+      @.@@@.@@@@
+      .@@@@@@@@.
+      @.@.@@@.@.
       """
     ]
   end
 
-  @tag :skip
   test "part1", %{input: input} do
     result = part1(input)
 
-    assert result
+    assert result == 13
   end
 
   @tag :skip
