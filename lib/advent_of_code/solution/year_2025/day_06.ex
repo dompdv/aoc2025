@@ -1,19 +1,18 @@
 defmodule AdventOfCode.Solution.Year2025.Day06 do
-  # import Enum, only: [map: 2, any?: 1, count: 2, sort: 1, sum: 1]
-  import Enum, only: [map: 2, with_index: 1, reduce: 3, sum: 1]
+  import Enum, only: [with_index: 1, reduce: 3, sum: 1, take: 2]
+
+  def mul(l), do: reduce(l, 1, &(&1 * &2))
 
   def parse_part1(input) do
-    # Each group of number/operand has a number
-    # Returns :  [{operator, operands}] . [{:mul, [12,1453,23]},...]
+    # Returns a list of groups like {:mul, [12,1453,23]} (operator, operands)
     input
     |> String.split("\n", trim: true)
     |> reduce(
       %{},
       fn line, acc ->
-        line
-        |> String.split(" ", trim: true)
-        |> with_index()
-        |> reduce(acc, fn {chunk, chunk_number}, local_acc ->
+        indexed_groups = line |> String.split(" ", trim: true) |> with_index()
+
+        reduce(indexed_groups, acc, fn {chunk, chunk_number}, local_acc ->
           {operator, operands} = Map.get(local_acc, chunk_number, {nil, []})
 
           case chunk do
@@ -32,67 +31,58 @@ defmodule AdventOfCode.Solution.Year2025.Day06 do
     |> Map.values()
   end
 
-  def mul(l), do: reduce(l, 1, &(&1 * &2))
-
   def part1(input) do
-    for {op, l} <- parse_part1(input) do
-      if op == :mul, do: mul(l), else: sum(l)
-    end
-    |> sum()
+    parse_part1(input)
+    |> reduce(0, fn
+      {op, l}, acc ->
+        acc + if op == :mul, do: mul(l), else: sum(l)
+    end)
   end
 
   def parse2(input) do
     lines = input |> String.split("\n", trim: true)
 
-    numbers =
-      Enum.take(lines, length(lines) - 1)
-      |> Enum.with_index()
-      |> map(fn {line, row} ->
-        to_charlist(line)
-        |> Enum.with_index()
-        |> map(fn {c, col} -> {{row, col}, c} end)
+    {
+      # map of %{column => number}
+      reduce(take(lines, length(lines) - 1), %{}, fn line, acc ->
+        line
+        |> String.codepoints()
+        |> with_index()
+        |> reduce(acc, fn {c, col}, local_acc ->
+          Map.update(local_acc, col, c, &(&1 <> c))
+        end)
       end)
-      |> List.flatten()
-      |> Map.new()
-
-    operators =
+      |> reduce(%{}, fn {col, s}, acc ->
+        s = String.trim(s)
+        if s == "", do: acc, else: Map.put(acc, col, String.to_integer(s))
+      end)
+      |> Map.new(),
+      # map of %{column => operator}
       List.last(lines)
       |> to_charlist()
-      |> Enum.with_index()
-      |> Enum.reduce([], fn {c, col}, acc ->
-        if c == 32, do: acc, else: [{col, c} | acc]
+      |> with_index()
+      |> reduce(%{}, fn {c, col}, acc ->
+        if c == 32, do: acc, else: Map.put(acc, col, c)
       end)
-      |> Enum.reverse()
+    }
+  end
 
-    line_size = map(lines, &String.length/1) |> Enum.max()
-    {numbers, operators, line_size, length(lines) - 1}
+  # Find the next element in a list. returns max_length if reaching the end of the list
+  def next([val], val, max_length), do: max_length
+  def next([val, n | _], val, _max_length), do: n
+  def next([_n | r], val, max_length), do: next(r, val, max_length)
+
+  # Gather numbers starting from col till an empty column
+  def gather(numbers, col, acc) do
+    if Map.has_key?(numbers, col), do: gather(numbers, col + 1, [numbers[col] | acc]), else: acc
   end
 
   def part2(input) do
-    {numbers, operators, line_size, rows} = parse2(input)
-    start_cols = map(operators, &elem(&1, 0))
-    blocks = Enum.chunk_every(start_cols ++ [line_size + 1], 2, 1)
-    blocks = List.delete_at(blocks, length(blocks) - 1) |> IO.inspect()
-    m_operators = Map.new(operators)
+    {numbers, operators} = parse2(input)
 
-    for [c1, c2] <- blocks do
-      op = m_operators[c1]
-
-      IO.inspect(op)
-
-      for c <- c1..(c2 - 2) do
-        for(row <- 0..(rows - 1), do: Map.get(numbers, {row, c}, 32))
-        |> to_string()
-        |> String.trim()
-        |> String.to_integer()
-      end
-      |> IO.inspect()
-      |> Enum.reduce(
-        if(op == ?*, do: 1, else: 0),
-        fn n, acc -> if op == ?*, do: n * acc, else: n + acc end
-      )
-      |> IO.inspect()
-    end
-    |> Enum.sum()
+    reduce(operators, 0, fn {col, op}, acc ->
+      l = gather(numbers, col, [])
+      acc + if op == ?*, do: mul(l), else: sum(l)
+    end)
   end
 end
