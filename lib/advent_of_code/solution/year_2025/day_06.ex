@@ -1,61 +1,44 @@
 defmodule AdventOfCode.Solution.Year2025.Day06 do
   # import Enum, only: [map: 2, any?: 1, count: 2, sort: 1, sum: 1]
-  import Enum, only: [map: 2]
+  import Enum, only: [map: 2, with_index: 1, reduce: 3, sum: 1]
 
-  @val """
-  123 328  51 64
-   45 64  387 23
-    6 98  215 314
-  *   +   *   +
-  """
+  def parse_part1(input) do
+    # Each group of number/operand has a number
+    # Returns :  [{operator, operands}] . [{:mul, [12,1453,23]},...]
+    input
+    |> String.split("\n", trim: true)
+    |> reduce(
+      %{},
+      fn line, acc ->
+        line
+        |> String.split(" ", trim: true)
+        |> with_index()
+        |> reduce(acc, fn {chunk, chunk_number}, local_acc ->
+          {operator, operands} = Map.get(local_acc, chunk_number, {nil, []})
 
-  def parse_line(line) do
-    line
-    |> String.split(" ", trim: true)
-    |> Enum.with_index()
-    |> map(fn {n, col} -> {col, String.to_integer(n)} end)
+          case chunk do
+            "*" ->
+              Map.put(local_acc, chunk_number, {:mul, operands})
+
+            "+" ->
+              Map.put(local_acc, chunk_number, {:add, operands})
+
+            number ->
+              Map.put(local_acc, chunk_number, {operator, [String.to_integer(number) | operands]})
+          end
+        end)
+      end
+    )
+    |> Map.values()
   end
 
-  def parse(input) do
-    [ops | rest] = input |> String.split("\n", trim: true) |> Enum.reverse()
-
-    rest =
-      rest
-      |> Enum.reverse()
-      |> map(&parse_line/1)
-      |> List.flatten()
-      |> Enum.group_by(&elem(&1, 0))
-
-    ops =
-      ops
-      |> String.split(" ", trim: true)
-      |> Enum.with_index()
-      |> map(fn
-        {"*", i} -> {i, :mul}
-        {"+", i} -> {i, :add}
-      end)
-      |> Map.new()
-
-    cols = map_size(ops)
-
-    {rest, ops, cols}
-  end
+  def mul(l), do: reduce(l, 1, &(&1 * &2))
 
   def part1(input) do
-    {numbers, operators, cols} = input |> parse()
-
-    for i <- 0..(cols - 1) do
-      op = Map.get(operators, i)
-
-      Enum.reduce(
-        Map.get(numbers, i),
-        if(op == :mul, do: 1, else: 0),
-        fn {_, n}, acc ->
-          if op == :mul, do: acc * n, else: acc + n
-        end
-      )
+    for {op, l} <- parse_part1(input) do
+      if op == :mul, do: mul(l), else: sum(l)
     end
-    |> Enum.sum()
+    |> sum()
   end
 
   def parse2(input) do
