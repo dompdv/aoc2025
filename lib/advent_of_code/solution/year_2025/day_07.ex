@@ -30,7 +30,6 @@ defmodule AdventOfCode.Solution.Year2025.Day07 do
   end
 
   def parse(input) do
-    # Returns %{row => [list of splitter's columns]}
     input
     |> String.split("\n", trim: true)
     |> Enum.reduce([], fn line, lines ->
